@@ -364,23 +364,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $is_admin) {
         }
 
         if ($can_force_delete && $tipe == 'barang') {
-            // Barang tidak boleh hapus permanen kalau masih punya detail transaksi
-            $stmt_check = $conn->prepare("
-                SELECT id
-                FROM detail_transaksi
-                WHERE id_barang = ?
-                LIMIT 1
-            ");
-            $stmt_check->bind_param("i", $id);
-            $stmt_check->execute();
-
-            if ($stmt_check->get_result()->num_rows > 0) {
-                $can_force_delete = false;
-                $status = 'error';
-                $message = 'Gagal hapus permanen! Barang masih memiliki detail transaksi.';
-            }
-
-            $stmt_check->close();
+            // Barang boleh dihapus permanen walaupun sudah memiliki transaksi.
+            // Riwayat transaksi tetap aman karena detail_transaksi menyimpan snapshot barang,
+            // dan foreign key id_barang sudah diatur ON DELETE SET NULL melalui migration SQL.
             $table = 'barang';
         }
 
