@@ -526,12 +526,15 @@ $queryListKategori = $conn->query("SELECT id, nama_kategori FROM kategori_barang
         <header class="top-navbar">
             <button class="btn btn-light d-md-none"><i class="fa-solid fa-bars"></i></button>
             <div class="d-none d-md-block"><i class="fa-solid fa-bars fs-5 text-secondary cursor-pointer"></i></div>
-            <div class="d-flex align-items-center gap-3">
-                <div class="text-end">
-                    <div class="fw-bold" style="font-size: 0.9rem;"><?= htmlspecialchars($nama_login) ?></div>
-                    <div class="text-muted small" style="font-size: 0.8rem;"><?= ucfirst($role_login) ?></div>
-                </div>
-                <i class="fa-regular fa-circle-user fs-2 text-secondary"></i>
+            <div class="dropdown">
+                <a class="text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="fa-regular fa-circle-user fs-4"></i>
+                    <span class="fw-medium"><?= htmlspecialchars($nama_login) ?></span>
+                </a>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                    <li><a class="dropdown-item text-danger" href="logout.php">Logout</a></li>
+                </ul>
             </div>
         </header>
 

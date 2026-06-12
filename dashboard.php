@@ -317,8 +317,6 @@ $queryTabelStok = $conn->query($sqlTabelStok);
                 </a>
 
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                    <li><a class="dropdown-item" href="#">Profil</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="logout.php">Logout</a></li>
                 </ul>
             </div>

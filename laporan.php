@@ -480,9 +480,8 @@ $export_query = http_build_query([
                     <i class="fa-regular fa-circle-user fs-4"></i>
                     <span class="fw-medium"><?= htmlspecialchars($nama_login) ?></span>
                 </a>
+
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                    <li><a class="dropdown-item" href="#">Profil</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="logout.php">Logout</a></li>
                 </ul>
             </div>
