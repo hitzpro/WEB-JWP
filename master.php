@@ -50,6 +50,18 @@ if (!in_array($active_tab, ['kategori', 'barang', 'pengguna'])) {
     $active_tab = 'kategori';
 }
 
+$mode_label = $view_status == 1 ? 'Data Terhapus / Sampah' : 'Data Aktif';
+$mode_desc = $view_status == 1
+    ? 'Saat ini Anda sedang melihat data yang sudah dipindahkan ke Sampah.'
+    : 'Saat ini Anda sedang melihat data aktif yang digunakan di sistem.';
+$mode_class = $view_status == 1 ? 'trash-mode' : 'active-mode';
+
+$tabLabel = [
+    'kategori' => 'Kategori',
+    'barang' => 'Barang',
+    'pengguna' => 'Pengguna'
+];
+
 // ==========================================
 // 1. LOGIKA CRUD (HANYA UNTUK ROLE ADMIN)
 // ==========================================
@@ -470,7 +482,15 @@ $queryListKategori = $conn->query("SELECT id, nama_kategori FROM kategori_barang
         .nav-item-custom:hover { background-color: #f3f4f6; color: #000; }
         .nav-item-custom.active { background-color: #f3f4f6; color: #000; font-weight: 600; border-right: 3px solid #000; }
         .main-content { margin-left: 260px; min-height: 100vh; display: flex; flex-direction: column; }
-        .top-navbar { height: 70px; background-color: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+        .top-navbar {
+            height: 70px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 30px;
+        }
 
         /* Component Master Card */
         .master-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; }
@@ -486,6 +506,82 @@ $queryListKategori = $conn->query("SELECT id, nama_kategori FROM kategori_barang
         .nav-tabs .nav-link { border: none; color: #6b7280; font-weight: 500; padding: 15px 20px; border-bottom: 2px solid transparent; border-radius: 0; margin-bottom: -1px;}
         .nav-tabs .nav-link.active { color: #000; background: transparent; border-bottom: 2px solid #000; font-weight: 600;}
 
+        .mode-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .mode-pill {
+            border-radius: 999px !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 12px !important;
+            font-weight: 700;
+        }
+
+        .mode-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #22c55e;
+        }
+
+        .mode-dot.trash {
+            background: #ef4444;
+        }
+
+        .mode-banner {
+            border: 1px solid #bbf7d0;
+            background: #f0fdf4;
+            color: #166534;
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 0.92rem;
+        }
+
+        .mode-banner.trash-mode {
+            border-color: #fecaca;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .mode-banner .mode-title {
+            font-weight: 800;
+            margin-right: 4px;
+        }
+
+        .data-section-header {
+            background: #f9fafb;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-tab-select-wrap {
+            display: none;
+            padding: 16px;
+        }
+
+        .desktop-tabs {
+            display: flex;
+        }
+
+        .tab-status-mini {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.82rem;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
         .table-custom th { background-color: #f9fafb; font-weight: 600; color: #4b5563; font-size: 0.85rem; padding: 14px 20px; text-transform: uppercase; border-bottom: 1px solid var(--border-color);}
         .table-custom td { padding: 14px 20px; vertical-align: middle; font-size: 0.9rem; border-bottom: 1px solid var(--border-color);}
 
@@ -499,11 +595,117 @@ $queryListKategori = $conn->query("SELECT id, nama_kategori FROM kategori_barang
         .modal-header { border-bottom: 1px solid var(--border-color); padding: 20px 24px; }
         .modal-footer { border-top: 1px solid var(--border-color); padding: 16px 24px; background: #f9fafb;}
         .form-control:focus, .form-select:focus { border-color: #000; box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05); }
+
+        /* Responsive sidebar overlay */
+        .sidebar {
+            z-index: 1045;
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.45);
+            z-index: 1040;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar-backdrop.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+
+        @media (min-width: 769px) {
+            .sidebar {
+                transform: none !important;
+            }
+
+            .sidebar-backdrop {
+                display: none !important;
+            }
+
+            .mobile-menu-btn {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body.sidebar-open {
+                overflow: hidden;
+            }
+
+            .sidebar {
+                width: 280px;
+                max-width: 85vw;
+                transform: translateX(-100%);
+                box-shadow: 12px 0 30px rgba(15, 23, 42, 0.16);
+            }
+
+            .sidebar.sidebar-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+            }
+
+            .top-navbar {
+                padding: 0 16px;
+                justify-content: space-between;
+            }
+
+            .mobile-menu-btn {
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: center;
+            }
+
+            main {
+                padding: 24px 16px !important;
+            }
+
+            .desktop-tabs {
+                display: none !important;
+            }
+
+            .mobile-tab-select-wrap {
+                display: block !important;
+            }
+
+            .data-section-header {
+                background: #ffffff;
+            }
+
+            .mode-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .mode-banner {
+                align-items: flex-start;
+            }
+
+            .master-card {
+                padding: 18px;
+            }
+
+            .table-wrapper,
+            .table-responsive {
+                overflow-x: auto;
+            }
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="sidebar d-none d-md-block d-flex flex-column justify-content-between">
+    <div class="sidebar d-flex flex-column justify-content-between">
         <div>
             <div class="sidebar-logo text-dark">LOGO WEB</div>
             <div class="mt-3">
@@ -522,11 +724,14 @@ $queryListKategori = $conn->query("SELECT id, nama_kategori FROM kategori_barang
         </div>
     </div>
 
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
     <div class="main-content">
         <header class="top-navbar">
-            <button class="btn btn-light d-md-none"><i class="fa-solid fa-bars"></i></button>
-            <div class="d-none d-md-block"><i class="fa-solid fa-bars fs-5 text-secondary cursor-pointer"></i></div>
-            <div class="dropdown">
+            <button type="button" class="btn btn-light mobile-menu-btn" id="sidebarToggle" aria-label="Buka menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+<div class="dropdown">
                 <a class="text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
                     <i class="fa-regular fa-circle-user fs-4"></i>
                     <span class="fw-medium"><?= htmlspecialchars($nama_login) ?></span>
@@ -539,15 +744,27 @@ $queryListKategori = $conn->query("SELECT id, nama_kategori FROM kategori_barang
         </header>
 
         <main class="p-4 p-md-5">
-            <div class="d-flex justify-content-between align-items-start mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-4 gap-2">
                 <div>
                     <h2 class="fw-bold mb-1">Master</h2>
                     <p class="text-muted">Kelola data master sistem secara terpusat dan terintegrasi.</p>
                 </div>
 
+                <div class="mode-actions">
+                    <a href="master.php?status=active&amp;tab=<?= htmlspecialchars($active_tab) ?>" class="btn btn-sm <?= $view_status == 0 ? 'btn-dark' : 'btn-outline-dark' ?> mode-pill">
+                        <span class="mode-dot"></span> Data Aktif
+                    </a>
+                    <a href="master.php?status=trash&amp;tab=<?= htmlspecialchars($active_tab) ?>" class="btn btn-sm <?= $view_status == 1 ? 'btn-danger' : 'btn-outline-danger' ?> mode-pill">
+                        <span class="mode-dot trash"></span> Sampah
+                    </a>
+                </div>
+            </div>
+
+            <div class="mode-banner <?= $mode_class ?>">
+                <span class="mode-dot <?= $view_status == 1 ? 'trash' : '' ?>"></span>
                 <div>
-                    <a href="master.php?status=active&tab=<?= $active_tab ?>" class="btn btn-sm <?= $view_status == 0 ? 'btn-dark' : 'btn-outline-secondary' ?> fw-medium" style="border-radius: 6px;">Data Aktif</a>
-                    <a href="master.php?status=trash&tab=<?= $active_tab ?>" class="btn btn-sm <?= $view_status == 1 ? 'btn-danger' : 'btn-outline-danger' ?> fw-medium" style="border-radius: 6px;"><i class="fa-regular fa-trash-can me-1"></i> Sampah</a>
+                    <span class="mode-title"><?= $mode_label ?></span>
+                    <span><?= $mode_desc ?></span>
                 </div>
             </div>
 
@@ -581,144 +798,136 @@ $queryListKategori = $conn->query("SELECT id, nama_kategori FROM kategori_barang
             <?php endif; ?>
 
             <div class="data-section">
-                <ul class="nav nav-tabs" id="masterTabs" role="tablist">
-                    <li class="nav-item"><button class="nav-link <?= $active_tab == 'kategori' ? 'active' : '' ?>" onclick="switchTab('kategori')" data-bs-toggle="tab" data-bs-target="#tab-kategori" type="button">Kategori (<?= $total_kat ?>)</button></li>
-                    <li class="nav-item"><button class="nav-link <?= $active_tab == 'barang' ? 'active' : '' ?>" onclick="switchTab('barang')" data-bs-toggle="tab" data-bs-target="#tab-barang" type="button">Barang (<?= $total_brg ?>)</button></li>
-                    <li class="nav-item"><button class="nav-link <?= $active_tab == 'pengguna' ? 'active' : '' ?>" onclick="switchTab('pengguna')" data-bs-toggle="tab" data-bs-target="#tab-pengguna" type="button">Pengguna (<?= $total_usr ?>)</button></li>
-                </ul>
+                <div class="data-section-header">
+                    <div class="mobile-tab-select-wrap">
+                        <label for="mobileMasterTab" class="form-label fw-bold mb-2">Pilih Data Master</label>
+                        <select id="mobileMasterTab" class="form-select" onchange="switchTab(this.value)">
+                            <option value="kategori" <?= $active_tab == 'kategori' ? 'selected' : '' ?>>Kategori (<?= $total_kat ?>)</option>
+                            <option value="barang" <?= $active_tab == 'barang' ? 'selected' : '' ?>>Barang (<?= $total_brg ?>)</option>
+                            <option value="pengguna" <?= $active_tab == 'pengguna' ? 'selected' : '' ?>>Pengguna (<?= $total_usr ?>)</option>
+                        </select>
+                        <div class="tab-status-mini">
+                            <span class="mode-dot <?= $view_status == 1 ? 'trash' : '' ?>"></span>
+                            <span><?= $mode_label ?> • <?= $tabLabel[$active_tab] ?></span>
+                        </div>
+                    </div>
 
-                <div class="tab-content">
-                    <div class="tab-pane fade <?= $active_tab == 'kategori' ? 'show active' : '' ?>" id="tab-kategori">
-                        <table class="table table-custom mb-0">
-                            <thead>
-                                <tr>
-                                    <th width="8%">No</th>
-                                    <th width="30%">Nama Kategori</th>
-                                    <th width="42%">Deskripsi</th>
-                                    <?php if ($is_admin): ?><th width="20%" class="text-center">Aksi</th><?php endif; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php $no=1+$offset_kat; while($row = $kategoriList->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?= $no++ ?></td>
-                                    <td class="fw-medium"><?= htmlspecialchars($row['nama_kategori']) ?></td>
-                                    <td class="text-muted"><?= htmlspecialchars($row['deskripsi'] ?? '-') ?></td>
-                                    <?php if ($is_admin): ?>
-                                    <td class="text-center">
+                    <ul class="nav nav-tabs desktop-tabs" id="masterTabs" role="tablist">
+                        <li class="nav-item"><button class="nav-link <?= $active_tab == 'kategori' ? 'active' : '' ?>" onclick="switchTab('kategori')" type="button">Kategori (<?= $total_kat ?>)</button></li>
+                        <li class="nav-item"><button class="nav-link <?= $active_tab == 'barang' ? 'active' : '' ?>" onclick="switchTab('barang')" type="button">Barang (<?= $total_brg ?>)</button></li>
+                        <li class="nav-item"><button class="nav-link <?= $active_tab == 'pengguna' ? 'active' : '' ?>" onclick="switchTab('pengguna')" type="button">Pengguna (<?= $total_usr ?>)</button></li>
+                    </ul>
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <?php if ($active_tab == 'kategori'): ?>
+                    <table class="table table-custom mb-0">
+                        <thead class="sticky-top bg-white" style="z-index: 1;">
+                            <tr>
+                                <th width="8%">No</th>
+                                <th width="30%">Nama Kategori</th>
+                                <th width="42%">Deskripsi</th>
+                                <?php if ($is_admin): ?><th width="20%" class="text-center">Aksi</th><?php endif; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php $no=1+$offset_kat; while($row = $kategoriList->fetch_assoc()): ?>
+                            <tr>
+                                <td><?= $no++ ?></td>
+                                <td class="fw-medium"><?= htmlspecialchars($row['nama_kategori']) ?></td>
+                                <td class="text-muted"><?= htmlspecialchars($row['deskripsi'] ?? '-') ?></td>
+                                <?php if ($is_admin): ?>
+                                <td>
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
                                         <?php if($view_status == 0): ?>
-                                            <button class="action-btn me-1" onclick="editKategori(<?= $row['id'] ?>, '<?= htmlspecialchars($row['nama_kategori'], ENT_QUOTES) ?>', '<?= htmlspecialchars($row['deskripsi'] ?? '', ENT_QUOTES) ?>')"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="action-btn" onclick="editKategori(<?= $row['id'] ?>, '<?= htmlspecialchars($row['nama_kategori'], ENT_QUOTES) ?>', '<?= htmlspecialchars($row['deskripsi'] ?? '', ENT_QUOTES) ?>')"><i class="fa-solid fa-pen"></i></button>
                                             <button class="action-btn delete" onclick="confirmDelete(<?= $row['id'] ?>, 'kategori')"><i class="fa-solid fa-trash"></i></button>
                                         <?php else: ?>
-                                            <button class="action-btn restore me-1" title="Restore" onclick="confirmRestore(<?= $row['id'] ?>, 'kategori')"><i class="fa-solid fa-trash-arrow-up"></i></button>
+                                            <button class="action-btn restore" title="Restore" onclick="confirmRestore(<?= $row['id'] ?>, 'kategori')"><i class="fa-solid fa-trash-arrow-up"></i></button>
                                             <button class="action-btn delete" title="Hapus Permanen" onclick="confirmForceDelete(<?= $row['id'] ?>, 'kategori')"><i class="fa-solid fa-skull-crossbones"></i></button>
                                         <?php endif; ?>
-                                    </td>
-                                    <?php endif; ?>
-                                </tr>
-                                <?php endwhile; if($total_kat == 0) echo "<tr><td colspan='4' class='text-center py-4 text-muted'>Tidak ada data.</td></tr>"; ?>
-                            </tbody>
-                        </table>
-                        <?php if($pages_kat > 1): ?>
-                        <div class="p-3 bg-light border-top d-flex justify-content-center">
-                            <ul class="pagination pagination-sm m-0">
-                                <?php for($i=1; $i<=$pages_kat; $i++): ?>
-                                    <li class="page-item <?= $page_kat == $i ? 'active' : '' ?>"><a class="page-link" href="master.php?status=<?= $view_status==1?'trash':'active' ?>&tab=kategori&page_kat=<?= $i ?>"><?= $i ?></a></li>
-                                <?php endfor; ?>
-                            </ul>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="tab-pane fade <?= $active_tab == 'barang' ? 'show active' : '' ?>" id="tab-barang">
-                        <table class="table table-custom mb-0">
-                            <thead>
-                                <tr>
-                                    <th>No</th><th>Kode</th><th>Nama Barang</th><th>Kategori</th><th>Stok</th><th>Satuan</th>
-                                    <?php if ($is_admin): ?><th class="text-center">Aksi</th><?php endif; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php $no=1+$offset_brg; while($row = $barangList->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?= $no++ ?></td>
-                                    <td class="text-primary fw-medium"><?= htmlspecialchars($row['kode_barang']) ?></td>
-                                    <td class="fw-medium"><?= htmlspecialchars($row['nama_barang']) ?></td>
-                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary border"><?= htmlspecialchars($row['nama_kategori'] ?? '-') ?></span></td>
-                                    <td class="fw-bold"><?= $row['stok'] ?></td>
-                                    <td><?= htmlspecialchars($row['satuan']) ?></td>
-                                    <?php if ($is_admin): ?>
-                                    <td class="text-center">
+                                    </div>
+                                </td>
+                                <?php endif; ?>
+                            </tr>
+                            <?php endwhile; if($total_kat == 0) echo "<tr><td colspan='4' class='text-center py-4 text-muted'>Tidak ada data kategori.</td></tr>"; ?>
+                        </tbody>
+                    </table>
+                    <?php elseif ($active_tab == 'barang'): ?>
+                    <table class="table table-custom mb-0">
+                        <thead class="sticky-top bg-white" style="z-index: 1;">
+                            <tr>
+                                <th>No</th>
+                                <th>Kode</th>
+                                <th>Nama Barang</th>
+                                <th>Kategori</th>
+                                <th>Stok</th>
+                                <th>Satuan</th>
+                                <?php if ($is_admin): ?><th class="text-center">Aksi</th><?php endif; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php $no=1+$offset_brg; while($row = $barangList->fetch_assoc()): ?>
+                            <tr>
+                                <td><?= $no++ ?></td>
+                                <td class="fw-medium"><?= htmlspecialchars($row['kode_barang']) ?></td>
+                                <td><?= htmlspecialchars($row['nama_barang']) ?></td>
+                                <td class="text-muted"><?= htmlspecialchars($row['nama_kategori'] ?? '-') ?></td>
+                                <td><?= (int) $row['stok'] ?></td>
+                                <td><?= htmlspecialchars($row['satuan'] ?? '-') ?></td>
+                                <?php if ($is_admin): ?>
+                                <td>
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
                                         <?php if($view_status == 0): ?>
-                                            <button class="action-btn me-1" onclick="editBarang(<?= $row['id'] ?>, <?= $row['id_kategori'] ?>, '<?= htmlspecialchars($row['kode_barang'], ENT_QUOTES) ?>', '<?= htmlspecialchars($row['nama_barang'], ENT_QUOTES) ?>', <?= $row['stok'] ?>, '<?= htmlspecialchars($row['satuan'], ENT_QUOTES) ?>', '<?= htmlspecialchars($row['deskripsi'], ENT_QUOTES) ?>')"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="action-btn" onclick="editBarang(<?= $row['id'] ?>, <?= (int)$row['id_kategori'] ?>, '<?= htmlspecialchars($row['kode_barang'], ENT_QUOTES) ?>', '<?= htmlspecialchars($row['nama_barang'], ENT_QUOTES) ?>', <?= (int)$row['stok'] ?>, '<?= htmlspecialchars($row['satuan'] ?? '', ENT_QUOTES) ?>', '<?= htmlspecialchars($row['deskripsi'] ?? '', ENT_QUOTES) ?>')"><i class="fa-solid fa-pen"></i></button>
                                             <button class="action-btn delete" onclick="confirmDelete(<?= $row['id'] ?>, 'barang')"><i class="fa-solid fa-trash"></i></button>
                                         <?php else: ?>
-                                            <button class="action-btn restore me-1" title="Restore" onclick="confirmRestore(<?= $row['id'] ?>, 'barang')"><i class="fa-solid fa-trash-arrow-up"></i></button>
+                                            <button class="action-btn restore" title="Restore" onclick="confirmRestore(<?= $row['id'] ?>, 'barang')"><i class="fa-solid fa-trash-arrow-up"></i></button>
                                             <button class="action-btn delete" title="Hapus Permanen" onclick="confirmForceDelete(<?= $row['id'] ?>, 'barang')"><i class="fa-solid fa-skull-crossbones"></i></button>
                                         <?php endif; ?>
-                                    </td>
-                                    <?php endif; ?>
-                                </tr>
-                                <?php endwhile; if($total_brg == 0) echo "<tr><td colspan='7' class='text-center py-4 text-muted'>Tidak ada data.</td></tr>"; ?>
-                            </tbody>
-                        </table>
-                        <?php if($pages_brg > 1): ?>
-                        <div class="p-3 bg-light border-top d-flex justify-content-center">
-                            <ul class="pagination pagination-sm m-0">
-                                <?php for($i=1; $i<=$pages_brg; $i++): ?>
-                                    <li class="page-item <?= $page_brg == $i ? 'active' : '' ?>"><a class="page-link" href="master.php?status=<?= $view_status==1?'trash':'active' ?>&tab=barang&page_brg=<?= $i ?>"><?= $i ?></a></li>
-                                <?php endfor; ?>
-                            </ul>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="tab-pane fade <?= $active_tab == 'pengguna' ? 'show active' : '' ?>" id="tab-pengguna">
-                        <table class="table table-custom mb-0">
-                            <thead>
-                                <tr>
-                                    <th>No</th><th>Nama Lengkap</th><th>Email</th><th>Role</th>
-                                    <?php if ($is_admin): ?><th class="text-center">Aksi</th><?php endif; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php $no=1+$offset_usr; while($row = $userList->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?= $no++ ?></td>
-                                    <td class="fw-medium"><?= htmlspecialchars($row['nama']) ?></td>
-                                    <td class="text-muted"><?= htmlspecialchars($row['email']) ?></td>
-                                    <td><span class="badge bg-dark bg-opacity-10 text-dark border"><?= ucfirst($row['role']) ?></span></td>
-                                    <?php if ($is_admin): ?>
-                                    <td class="text-center">
+                                    </div>
+                                </td>
+                                <?php endif; ?>
+                            </tr>
+                            <?php endwhile; if($total_brg == 0) echo "<tr><td colspan='7' class='text-center py-4 text-muted'>Tidak ada data barang.</td></tr>"; ?>
+                        </tbody>
+                    </table>
+                    <?php else: ?>
+                    <table class="table table-custom mb-0">
+                        <thead class="sticky-top bg-white" style="z-index: 1;">
+                            <tr>
+                                <th>No</th>
+                                <th>Nama</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <?php if ($is_admin): ?><th class="text-center">Aksi</th><?php endif; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php $no=1+$offset_usr; while($row = $userList->fetch_assoc()): ?>
+                            <tr>
+                                <td><?= $no++ ?></td>
+                                <td class="fw-medium"><?= htmlspecialchars($row['nama']) ?></td>
+                                <td><?= htmlspecialchars($row['email']) ?></td>
+                                <td><span class="badge bg-light text-dark border"><?= htmlspecialchars(ucfirst($row['role'])) ?></span></td>
+                                <?php if ($is_admin): ?>
+                                <td>
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
                                         <?php if($view_status == 0): ?>
-                                            <button class="action-btn me-1" onclick="editPengguna(<?= $row['id'] ?>, '<?= htmlspecialchars($row['nama'], ENT_QUOTES) ?>', '<?= htmlspecialchars($row['email'], ENT_QUOTES) ?>', '<?= $row['role'] ?>')"><i class="fa-solid fa-pen"></i></button>
-
-                                            <?php if($row['id'] == $id_user_login): ?>
-                                                <button class="action-btn" disabled text="Akun Anda" style="opacity: 0.4; cursor: not-allowed;"><i class="fa-solid fa-ban"></i></button>
-                                            <?php else: ?>
-                                                <button class="action-btn delete" onclick="confirmDelete(<?= $row['id'] ?>, 'pengguna')"><i class="fa-solid fa-trash"></i></button>
-                                            <?php endif; ?>
-
+                                            <button class="action-btn" onclick="editPengguna(<?= $row['id'] ?>, '<?= htmlspecialchars($row['nama'], ENT_QUOTES) ?>', '<?= htmlspecialchars($row['email'], ENT_QUOTES) ?>', '<?= htmlspecialchars($row['role'], ENT_QUOTES) ?>')"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="action-btn delete" onclick="confirmDelete(<?= $row['id'] ?>, 'pengguna')"><i class="fa-solid fa-trash"></i></button>
                                         <?php else: ?>
-                                            <button class="action-btn restore me-1" title="Restore" onclick="confirmRestore(<?= $row['id'] ?>, 'pengguna')"><i class="fa-solid fa-trash-arrow-up"></i></button>
+                                            <button class="action-btn restore" title="Restore" onclick="confirmRestore(<?= $row['id'] ?>, 'pengguna')"><i class="fa-solid fa-trash-arrow-up"></i></button>
                                             <button class="action-btn delete" title="Hapus Permanen" onclick="confirmForceDelete(<?= $row['id'] ?>, 'pengguna')"><i class="fa-solid fa-skull-crossbones"></i></button>
                                         <?php endif; ?>
-                                    </td>
-                                    <?php endif; ?>
-                                </tr>
-                                <?php endwhile; if($total_usr == 0) echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Tidak ada data.</td></tr>"; ?>
-                            </tbody>
-                        </table>
-                        <?php if($pages_usr > 1): ?>
-                        <div class="p-3 bg-light border-top d-flex justify-content-center">
-                            <ul class="pagination pagination-sm m-0">
-                                <?php for($i=1; $i<=$pages_usr; $i++): ?>
-                                    <li class="page-item <?= $page_usr == $i ? 'active' : '' ?>"><a class="page-link" href="master.php?status=<?= $view_status==1?'trash':'active' ?>&tab=pengguna&page_usr=<?= $i ?>"><?= $i ?></a></li>
-                                <?php endfor; ?>
-                            </ul>
-                        </div>
-                        <?php endif; ?>
-                    </div>
+                                    </div>
+                                </td>
+                                <?php endif; ?>
+                            </tr>
+                            <?php endwhile; if($total_usr == 0) echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Tidak ada data pengguna.</td></tr>"; ?>
+                        </tbody>
+                    </table>
+                    <?php endif; ?>
                 </div>
             </div>
         </main>
@@ -962,5 +1171,51 @@ $queryListKategori = $conn->query("SELECT id, nama_kategori FROM kategori_barang
             Swal.fire({ title: 'Gagal!', text: '<?= $message ?>', icon: 'error', confirmButtonColor: '#ef4444' });
         <?php endif; ?>
     </script>
+
+    <script>
+        // Sidebar mobile: buka/tutup menu sebagai slider overlay.
+        (function () {
+            const sidebar = document.querySelector('.sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (!sidebar || !toggleBtn || !backdrop) return;
+
+            function bukaSidebar() {
+                sidebar.classList.add('sidebar-open');
+                backdrop.classList.add('show');
+                document.body.classList.add('sidebar-open');
+            }
+
+            function tutupSidebar() {
+                sidebar.classList.remove('sidebar-open');
+                backdrop.classList.remove('show');
+                document.body.classList.remove('sidebar-open');
+            }
+
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.contains('sidebar-open') ? tutupSidebar() : bukaSidebar();
+            });
+
+            backdrop.addEventListener('click', tutupSidebar);
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') tutupSidebar();
+            });
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 768) tutupSidebar();
+            });
+
+            document.querySelectorAll('.sidebar a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    if (window.innerWidth <= 768 && link.getAttribute('data-bs-toggle') !== 'collapse') {
+                        tutupSidebar();
+                    }
+                });
+            });
+        })();
+    </script>
+
 </body>
 </html>

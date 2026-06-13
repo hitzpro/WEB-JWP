@@ -160,7 +160,15 @@ if ($queryBarang) {
         .nav-item-custom:hover { background-color: #f3f4f6; color: #000; }
         .nav-item-custom.active { background-color: #f3f4f6; color: #000; font-weight: 600; border-right: 3px solid #000; }
         .main-content { margin-left: 260px; min-height: 100vh; display: flex; flex-direction: column; }
-        .top-navbar { height: 70px; background-color: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+        .top-navbar {
+            height: 70px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 30px;
+        }
         .form-card { background: #fff; border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
         .help-box { border: 1px solid #dbeafe; background: #eff6ff; color: #1e3a8a; border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
         .step-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
@@ -185,11 +193,92 @@ if ($queryBarang) {
         .btn-submit:hover { background-color: #000; }
         .btn-submit:disabled { background-color: #9ca3af; cursor: not-allowed; opacity: 0.75; }
         @media (max-width: 768px) { .main-content { margin-left: 0; } .sidebar { display: none; } }
+
+        /* Responsive sidebar overlay */
+        .sidebar {
+            z-index: 1045;
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.45);
+            z-index: 1040;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar-backdrop.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+
+        @media (min-width: 769px) {
+            .sidebar {
+                transform: none !important;
+            }
+
+            .sidebar-backdrop {
+                display: none !important;
+            }
+
+            .mobile-menu-btn {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body.sidebar-open {
+                overflow: hidden;
+            }
+
+            .sidebar {
+                width: 280px;
+                max-width: 85vw;
+                transform: translateX(-100%);
+                box-shadow: 12px 0 30px rgba(15, 23, 42, 0.16);
+            }
+
+            .sidebar.sidebar-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+            }
+
+            .top-navbar {
+                padding: 0 16px;
+                justify-content: space-between;
+            }
+
+            .mobile-menu-btn {
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: center;
+            }
+
+            main {
+                padding: 24px 16px !important;
+            }
+
+            .table-wrapper,
+            .table-responsive {
+                overflow-x: auto;
+            }
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="sidebar d-none d-md-block d-flex flex-column justify-content-between">
+    <div class="sidebar d-flex flex-column justify-content-between">
         <div>
             <div class="sidebar-logo text-dark">LOGO WEB</div>
             <div class="mt-3">
@@ -208,11 +297,14 @@ if ($queryBarang) {
         <div class="mb-4 border-top pt-3"><a href="logout.php" class="nav-item-custom text-danger"><i class="fa-solid fa-arrow-right-from-bracket text-danger"></i> Logout</a></div>
     </div>
 
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
     <div class="main-content">
         <header class="top-navbar">
-            <button class="btn btn-light d-md-none"><i class="fa-solid fa-bars"></i></button>
-            <div class="d-none d-md-block"><i class="fa-solid fa-bars fs-5 text-secondary"></i></div>
-            <div class="dropdown">
+            <button type="button" class="btn btn-light mobile-menu-btn" id="sidebarToggle" aria-label="Buka menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+<div class="dropdown">
                 <a class="text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
                     <i class="fa-regular fa-circle-user fs-4"></i>
                     <span class="fw-medium"><?= htmlspecialchars($nama_login) ?></span>
@@ -388,5 +480,51 @@ if ($queryBarang) {
             });
         <?php endif; ?>
     </script>
+
+    <script>
+        // Sidebar mobile: buka/tutup menu sebagai slider overlay.
+        (function () {
+            const sidebar = document.querySelector('.sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (!sidebar || !toggleBtn || !backdrop) return;
+
+            function bukaSidebar() {
+                sidebar.classList.add('sidebar-open');
+                backdrop.classList.add('show');
+                document.body.classList.add('sidebar-open');
+            }
+
+            function tutupSidebar() {
+                sidebar.classList.remove('sidebar-open');
+                backdrop.classList.remove('show');
+                document.body.classList.remove('sidebar-open');
+            }
+
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.contains('sidebar-open') ? tutupSidebar() : bukaSidebar();
+            });
+
+            backdrop.addEventListener('click', tutupSidebar);
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') tutupSidebar();
+            });
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 768) tutupSidebar();
+            });
+
+            document.querySelectorAll('.sidebar a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    if (window.innerWidth <= 768 && link.getAttribute('data-bs-toggle') !== 'collapse') {
+                        tutupSidebar();
+                    }
+                });
+            });
+        })();
+    </script>
+
 </body>
 </html>

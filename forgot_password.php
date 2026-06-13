@@ -2,94 +2,87 @@
 session_start();
 require 'config/db_connect.php';
 
-// ==============================
-// KONFIGURASI & VARIABEL GLOBAL
-// ==============================
 $status = '';
 $message = '';
 $step = 'email';
 $email_found = '';
 
-$isPost = $_SERVER["REQUEST_METHOD"] === "POST";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-if ($isPost && isset($_POST['cek_email'])) {
-    $email = trim($_POST['email'] ?? '');
+    // =========================
+    // STEP 1: CEK EMAIL
+    // =========================
+    if (isset($_POST['cek_email'])) {
+        $email = trim($_POST['email']);
 
-    if ($email === '') {
-        $status = 'error';
-        $message = 'Email wajib diisi.';
-    } else {
-        // Query untuk mengecek email user aktif.
-        $sqlCekEmail = "
-            SELECT id, email
-            FROM users
-            WHERE email = ?
-            AND is_delete = 0
-            LIMIT 1
-        ";
-
-        $stmt = $conn->prepare($sqlCekEmail);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
-
-            $step = 'password';
-            $email_found = $user['email'];
-            $status = 'success';
-            $message = 'Email ditemukan. Silakan masukkan password baru.';
-        } else {
+        if ($email == '') {
             $status = 'error';
-            $message = 'Email tidak ditemukan di sistem.';
-        }
+            $message = 'Email wajib diisi.';
+        } else {
+            $stmt = $conn->prepare("SELECT id, email FROM users WHERE email = ? AND is_delete = 0");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-        $stmt->close();
+            if ($result->num_rows > 0) {
+                $user = $result->fetch_assoc();
+
+                $step = 'password';
+                $email_found = $user['email'];
+
+                $status = 'success';
+                $message = 'Email ditemukan. Silakan masukkan password baru.';
+            } else {
+                $status = 'error';
+                $message = 'Email tidak ditemukan di sistem.';
+            }
+
+            $stmt->close();
+        }
     }
-}
 
-if ($isPost && isset($_POST['update_password'])) {
-    $email = trim($_POST['email'] ?? '');
-    $password_baru = $_POST['password_baru'] ?? '';
-    $konfirmasi_password = $_POST['konfirmasi_password'] ?? '';
+    // =========================
+    // STEP 2: UPDATE PASSWORD
+    // =========================
+    if (isset($_POST['update_password'])) {
+        $email = trim($_POST['email']);
+        $password_baru = $_POST['password_baru'];
+        $konfirmasi_password = $_POST['konfirmasi_password'];
 
-    $step = 'password';
-    $email_found = $email;
-
-    if ($password_baru === '' || $konfirmasi_password === '') {
-        $status = 'error';
-        $message = 'Password baru dan konfirmasi password wajib diisi.';
-    } elseif ($password_baru !== $konfirmasi_password) {
-        $status = 'error';
-        $message = 'Konfirmasi password tidak sama.';
-    } elseif (strlen($password_baru) < 6) {
-        $status = 'error';
-        $message = 'Password minimal 6 karakter.';
-    } else {
-        $password_hash = password_hash($password_baru, PASSWORD_DEFAULT);
-
-        // Query untuk update password user aktif berdasarkan email.
-        $sqlUpdatePassword = "
-            UPDATE users
-            SET password_hash = ?
-            WHERE email = ?
-            AND is_delete = 0
-        ";
-
-        $stmt = $conn->prepare($sqlUpdatePassword);
-        $stmt->bind_param("ss", $password_hash, $email);
-
-        if ($stmt->execute()) {
-            $step = 'done';
-            $status = 'success';
-            $message = 'Password berhasil diubah. Silakan login menggunakan password baru.';
-        } else {
+        if ($password_baru == '' || $konfirmasi_password == '') {
+            $step = 'password';
+            $email_found = $email;
             $status = 'error';
-            $message = 'Gagal mengubah password.';
-        }
+            $message = 'Password baru dan konfirmasi password wajib diisi.';
+        } elseif ($password_baru !== $konfirmasi_password) {
+            $step = 'password';
+            $email_found = $email;
+            $status = 'error';
+            $message = 'Konfirmasi password tidak sama.';
+        } elseif (strlen($password_baru) < 6) {
+            $step = 'password';
+            $email_found = $email;
+            $status = 'error';
+            $message = 'Password minimal 6 karakter.';
+        } else {
+            $password_hash = password_hash($password_baru, PASSWORD_DEFAULT);
 
-        $stmt->close();
+            $stmt = $conn->prepare("UPDATE users SET password_hash = ? WHERE email = ? AND is_delete = 0");
+            $stmt->bind_param("ss", $password_hash, $email);
+
+            if ($stmt->execute()) {
+                $status = 'success';
+                $message = 'Password berhasil diubah. Silakan login menggunakan password baru.';
+                $step = 'done';
+            } else {
+                $step = 'password';
+                $email_found = $email;
+                $status = 'error';
+                $message = 'Gagal mengubah password.';
+            }
+
+            $stmt->close();
+        }
     }
 }
 ?>
